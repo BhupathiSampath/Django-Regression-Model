@@ -1,12 +1,48 @@
+{% load static %}
 <html>
 <head>
     <title>Regression Algorithnm</title>
+    <style>
+        body{
+            background-image: url("{% static 'images/image3.jpeg' %}");
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-size: cover;
+        }
+        .main{
+            position: fixed;
+            top: 60px;
+            left: 430;
+            width: 300px;
+            height: 240px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            align-items: center;
+            padding: 5%;
+        }
+        h1{
+            color: #0086b3;
+            font-size: 30px;
+            font-weight: bold;
+        }
+        p{
+            color: #0086b3;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        input[type=submit]{
+            background-color: #4dc3ff;
+            border: 2px;
+            color: white;
+            padding: 8px 16px;
+            cursor: pointer;
+            margin-top: 5px;
+        }
+    </style>
 </head>
 <body>
-    <div align='center' class="main">
-        <h1>Welcome to the House rent prediction page</h1>
-    </div>
-    <div align='center' class="main">
+    <h1 align="center">Welcome to the House rent prediction page</h1>
+    <div style="padding-top: 10px;" align='center' class="main">
         <p>Please enter the following information</p>
         <form action="results">
             <table>
@@ -18,20 +54,20 @@
                         <td align="left"><input type="text" name="deposit"></td>
                     </tr>
                     <tr>
-                        <td align="right">MaintenanceCharge: </td>
-                        <td align="left"><input type="text" name="MaintenanceCharge"></td>
-                    </tr>
-                    <tr>
                         <td align="right">Furnished: </td>
                         <td align="left"><input type="text" name="Furnished"></td>
+                    </tr>
+                    <tr>
+                        <td align="right">TenantType: </td>
+                        <td align="left"><input type="text" name="TenantType"></td>
                     </tr>
                     <tr>
                         <td align="right">ApartmentType: </td>
                         <td align="left"><input type="text" name="ApartmentType"></td>
                     </tr>
                     <tr>
-                        <td align="right">TenantType: </td>
-                        <td align="left"><input type="text" name="TenantType"></td>
+                        <td align="right">MaintenanceCharge: </td>
+                        <td align="left"><input type="text" name="MaintenanceCharge"></td>
                     </tr>
                     <tr>
                         <td align="right"></td>
