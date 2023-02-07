@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.shortcuts import redirect
 from regression.forms import InputForm
 import requests
 # Create your views here.
@@ -41,15 +42,9 @@ def results(request):
     df["Rent"] = df["Rent"].apply(lambda x: np.log(x) if not x==0 else x)
     for i in ["Rent","Area"]:
         Q1 = np.percentile(df[i], 25, interpolation = 'midpoint')
-
         Q3 = np.percentile(df[i], 75, interpolation = 'midpoint')
         IQR = Q3 - Q1
-
-        # print("Old Shape: ", df.shape)
-
-        # Upper bound
         upper = np.where(df[i] >= (Q3+1.5*IQR))
-        # Lower bound
         lower = np.where(df[i] <= (Q1-1.5*IQR))
 
         ''' Removing the Outliers '''
@@ -60,7 +55,7 @@ def results(request):
     X = df.drop(["Rent"], axis=1)
     print(X.columns)
     y = df['Rent']
-    X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size = 0.2, random_state=5)
+    X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size = 0.01, random_state=5)
     lin_model = LinearRegression()
     lin_model.fit(X_train, Y_train)
 
@@ -71,118 +66,111 @@ def results(request):
     ApartmentType = request.GET["ApartmentType"]
     TenantType = request.GET["TenantType"]
 
-    print("Area",area)
-    Furnished_Fully = 0
-    Furnished_Semi = 0
-    Furnished_Unfurnished = 0
-    if Furnished == "Fully furnished":
-        Furnished_Fully = 1
-        Furnished_Semi = 0
-        Furnished_Unfurnished = 0
-    if Furnished == "Semi furnished":
-        Furnished_Fully = 0
-        Furnished_Semi = 1
-        Furnished_Unfurnished = 0
-    if Furnished == "Unfurnished":
-        Furnished_Fully = 0
-        Furnished_Semi = 0
-        Furnished_Unfurnished = 1
-    ApartmentType_1rk = 0
-    ApartmentType_1 = 0
-    ApartmentType_2 = 0
-    ApartmentType_3 = 0
-    ApartmentType_4 = 0
-    ApartmentType_4p = 0
-    if ApartmentType == '1 RK':
-        ApartmentType_1rk = 1
-        ApartmentType_1 = 0
-        ApartmentType_2 = 0
-        ApartmentType_3 = 0
-        ApartmentType_4 = 0
-        ApartmentType_4p = 0
-    if ApartmentType == '1 BHK':
-        ApartmentType_1rk = 0
-        ApartmentType_1 = 1
-        ApartmentType_2 = 0
-        ApartmentType_3 = 0
-        ApartmentType_4 = 0
-        ApartmentType_4p = 0
-    if ApartmentType == '2 BHK':
-        ApartmentType_1rk = 0
-        ApartmentType_1 = 0
-        ApartmentType_2 = 1
-        ApartmentType_3 = 0
-        ApartmentType_4 = 0
-        ApartmentType_4p = 0
-    if ApartmentType == '3 BHK':
-        ApartmentType_1rk = 0
-        ApartmentType_1 = 0
-        ApartmentType_2 = 0
-        ApartmentType_3 = 1
-        ApartmentType_4 = 0
-        ApartmentType_4p = 0
-    if ApartmentType == '4 BHK':
-        ApartmentType_1rk = 0
-        ApartmentType_1 = 0
-        ApartmentType_2 = 0
-        ApartmentType_3 = 0
-        ApartmentType_4 = 1
-        ApartmentType_4p = 0
-    if ApartmentType == '4+ BHK':
-        ApartmentType_1rk = 0
-        ApartmentType_1 = 0
-        ApartmentType_2 = 0
-        ApartmentType_3 = 0
-        ApartmentType_4 = 0
-        ApartmentType_4p = 1
-    TenantType_Family = 0
-    TenantType_Company = 0
-    TenantType_Bachelor = 0
-    TenantType_All = 0
-    if TenantType == "Bachelor":
-        TenantType_All = 0
-        TenantType_Family = 0
-        TenantType_Company = 0
-        TenantType_Bachelor = 1
-    if TenantType == "Family":
-        TenantType_All = 0
-        TenantType_Family = 1
-        TenantType_Company = 0
-        TenantType_Bachelor = 0
-    if TenantType == "Company":
-        TenantType_All = 0
-        TenantType_Family = 0
-        TenantType_Company = 1
-        TenantType_Bachelor = 0
-    if TenantType == "All":
-        TenantType_All = 1
-        TenantType_Family = 0
-        TenantType_Company = 0
-        TenantType_Bachelor = 0
-        
-
     test_data = {
-        "area": area,
-        "deposit": deposit,
-        "MaintenanceCharge": MaintenanceCharge,
-        "Furnished_Fully furnished": Furnished_Fully,
-        "Furnished_Semi furnished": Furnished_Semi,
-        "Furnished_Unfurnished": Furnished_Unfurnished,
-        "ApartmentType_1 BHK": ApartmentType_1, 
-        "ApartmentType_1 RK": ApartmentType_1rk,
-        "ApartmentType_2 BHK": ApartmentType_2, 
-        "ApartmentType_3 BHK": ApartmentType_3, 
-        "ApartmentType_4 BHK": ApartmentType_4,
-        "ApartmentType_4+ BHK": ApartmentType_4p,
-        "TenantType_All": TenantType_All,
-        "TenantType_Family": TenantType_Family,
-        "TenantType_Company": TenantType_Company,
-        "TenantType_Bachelor": TenantType_Bachelor,
+        "Area": [area],
+        "Deposit": [deposit],
+        "MaintenanceCharge": [MaintenanceCharge],
+        "Furnished": [Furnished],
+        "ApartmentType": [ApartmentType],
+        "TenantType": [TenantType],
     }
-
-    test_data["area"] = np.log(test_data["area"])
-    y_test_predict = lin_model.predict([list(test_data.values())])
-    # test_data["rent"] = np.log(test_data["rent"])
-    print("predicted_value",y_test_predict[0])
-
-    return render(request,'home.html', {"Result": np.exp(y_test_predict[0])})
+    test_data["Area"] = np.log(test_data["Area"])
+    df_new = pd.DataFrame(test_data)
+    X_test = pd.get_dummies(df_new)
+    X_test = X_test.reindex(columns = X_train.columns, fill_value=0)
+    # if Furnished == "Fully furnished":
+    #     Furnished_Fully = 1
+    #     Furnished_Semi = 0
+    #     Furnished_Unfurnished = 0
+    # if Furnished == "Semi furnished":
+    #     Furnished_Fully = 0
+    #     Furnished_Semi = 1
+    #     Furnished_Unfurnished = 0
+    # if Furnished == "Unfurnished":
+    #     Furnished_Fully = 0
+    #     Furnished_Semi = 0
+    #     Furnished_Unfurnished = 1
+    # if ApartmentType == '1 RK':
+    #     ApartmentType_1rk = 1
+    #     ApartmentType_1 = 0
+    #     ApartmentType_2 = 0
+    #     ApartmentType_3 = 0
+    #     ApartmentType_4 = 0
+    #     ApartmentType_4p = 0
+    # if ApartmentType == '1 BHK':
+    #     ApartmentType_1rk = 0
+    #     ApartmentType_1 = 1
+    #     ApartmentType_2 = 0
+    #     ApartmentType_3 = 0
+    #     ApartmentType_4 = 0
+    #     ApartmentType_4p = 0
+    # if ApartmentType == '2 BHK':
+    #     ApartmentType_1rk = 0
+    #     ApartmentType_1 = 0
+    #     ApartmentType_2 = 1
+    #     ApartmentType_3 = 0
+    #     ApartmentType_4 = 0
+    #     ApartmentType_4p = 0
+    # if ApartmentType == '3 BHK':
+    #     ApartmentType_1rk = 0
+    #     ApartmentType_1 = 0
+    #     ApartmentType_2 = 0
+    #     ApartmentType_3 = 1
+    #     ApartmentType_4 = 0
+    #     ApartmentType_4p = 0
+    # if ApartmentType == '4 BHK':
+    #     ApartmentType_1rk = 0
+    #     ApartmentType_1 = 0
+    #     ApartmentType_2 = 0
+    #     ApartmentType_3 = 0
+    #     ApartmentType_4 = 1
+    #     ApartmentType_4p = 0
+    # if ApartmentType == '4+ BHK':
+    #     ApartmentType_1rk = 0
+    #     ApartmentType_1 = 0
+    #     ApartmentType_2 = 0
+    #     ApartmentType_3 = 0
+    #     ApartmentType_4 = 0
+    #     ApartmentType_4p = 1
+    # if TenantType == "Bachelor":
+    #     TenantType_All = 0
+    #     TenantType_Family = 0
+    #     TenantType_Company = 0
+    #     TenantType_Bachelor = 1
+    # if TenantType == "Family":
+    #     TenantType_All = 0
+    #     TenantType_Family = 1
+    #     TenantType_Company = 0
+    #     TenantType_Bachelor = 0
+    # if TenantType == "Company":
+    #     TenantType_All = 0
+    #     TenantType_Family = 0
+    #     TenantType_Company = 1
+    #     TenantType_Bachelor = 0
+    # if TenantType == "All":
+    #     TenantType_All = 1
+    #     TenantType_Family = 0
+    #     TenantType_Company = 0
+    #     TenantType_Bachelor = 0
+    # test_data = {
+    #     "area": area,
+    #     "deposit": deposit,
+    #     "MaintenanceCharge": MaintenanceCharge,
+    #     "Furnished_Fully furnished": Furnished_Fully,
+    #     "Furnished_Semi furnished": Furnished_Semi,
+    #     "Furnished_Unfurnished": Furnished_Unfurnished,
+    #     "ApartmentType_1 BHK": ApartmentType_1, 
+    #     "ApartmentType_1 RK": ApartmentType_1rk,
+    #     "ApartmentType_2 BHK": ApartmentType_2, 
+    #     "ApartmentType_3 BHK": ApartmentType_3, 
+    #     "ApartmentType_4 BHK": ApartmentType_4,
+    #     "ApartmentType_4+ BHK": ApartmentType_4p,
+    #     "TenantType_All": TenantType_All,
+    #     "TenantType_Family": TenantType_Family,
+    #     "TenantType_Company": TenantType_Company,
+    #     "TenantType_Bachelor": TenantType_Bachelor,
+    # }
+    # test_data["area"] = np.log(test_data["area"])
+    # y_test_predict = lin_model.predict([list(test_data.values())])
+    y_test_predict = lin_model.predict(X_test)
+    return render(request,'home.html', {"Result": round(np.exp(y_test_predict[0]))})
